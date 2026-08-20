@@ -75,3 +75,23 @@ ui/.vite/
 
 # Local AI coding prompts (not public product docs)
 .agent-prompts/
+
+# Archify skill + local artifacts/metadata
+.agents/skills/archify/
+.archify/
+archify-output/
+archify-*.json
+archify-*.html
+archify-*.png
+archify-*.svg
+archify-*.webm
+*.architecture.json
+*.architecture.html
+*.workflow.json
+*.workflow.html
+*.sequence.json
+*.sequence.html
+*.dataflow.json
+*.dataflow.html
+*.lifecycle.json
+*.lifecycle.html

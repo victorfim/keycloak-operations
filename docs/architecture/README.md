@@ -4,6 +4,7 @@ How the Keycloak / RHBK Operations Platform is structured.
 
 ## Start here
 
+0. [hld/README.md](hld/README.md) — high-level design (PT-BR / EN-US / ES-LA)
 1. [overview.md](overview.md) — platform layers and flows
 2. [multi-target.md](multi-target.md) — target registry and isolation
 3. [assessment-engine.md](assessment-engine.md) — evidence → rules → findings

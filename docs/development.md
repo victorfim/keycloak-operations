@@ -7,7 +7,7 @@ AI-assisted workflow: [`development/ai-assisted-development.md`](development/ai-
 - Java 21+
 - Maven 3.9+
 - Node.js ≥ 20 + npm (Fleet Console in `ui/`)
-- Podman or Docker (Compose)
+- Podman (Compose)
 - `curl` and `jq` (for setup / smoke scripts)
 
 ## Verified dependency versions (Maven Central, Aug 2026)
@@ -53,7 +53,7 @@ npm run dev
 # http://localhost:3000
 ```
 
-Production UI image: `ui/Dockerfile` (nginx unprivileged). OpenShift: `deploy/openshift/100-ui-deployment.yaml` (+ service/route). See [`../ui/README.md`](../ui/README.md).
+Production UI image: `ui/Containerfile` (nginx unprivileged). Build with `podman build -t keycloak-operations-ui -f ui/Containerfile ui`. OpenShift: `deploy/openshift/100-ui-deployment.yaml` (+ service/route). See [`../ui/README.md`](../ui/README.md).
 
 ## Run (Streamable HTTP)
 

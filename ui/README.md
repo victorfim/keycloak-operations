@@ -12,7 +12,7 @@ React + TypeScript + Vite frontend for the **Keycloak Operations Platform** (mil
 
 ```bash
 # 1. Start the backend (from repo root)
-docker compose -f dev/compose.yaml up -d
+podman compose -f dev/compose.yaml up -d
 mvn quarkus:dev   # or: java -jar target/quarkus-app/quarkus-run.jar
 
 # 2. Start the UI dev server
@@ -58,8 +58,12 @@ In dev mode, the Vite server proxies `/api` → `http://localhost:8081`, so you 
 ## Production Build (nginx)
 
 ```bash
+# Local static build
 npm run build
 # Serve ./dist/ with nginx; ensure nginx rewrites unknown paths to index.html
+
+# Or build the production image with Podman
+podman build -t keycloak-operations-ui -f Containerfile .
 ```
 
 Example nginx snippet:

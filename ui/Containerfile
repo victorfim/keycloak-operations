@@ -1,4 +1,5 @@
 # Multi-stage production image for Fleet Operations Console static assets.
+# Build: podman build -t keycloak-operations-ui -f Containerfile .
 # Browser → nginx → (same-origin /api proxy OR separate backend Route).
 # This image has NO Kubernetes, Prometheus, or Keycloak credentials.
 FROM node:20-alpine AS build

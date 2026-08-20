@@ -7,7 +7,7 @@ Thanks for contributing to **Keycloak / RHBK Operations** (`keycloak-operations-
 - **Java 21**
 - **Maven 3.9+** (wrapper not required if system Maven is available)
 - **Node.js ≥ 20** and npm (for `ui/`)
-- Docker (optional) for local Keycloak / PostgreSQL / Prometheus via `dev/compose.yaml`
+- Podman (optional) for local Keycloak / PostgreSQL / Prometheus via `dev/compose.yaml`
 
 ## Build & test
 

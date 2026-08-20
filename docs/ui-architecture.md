@@ -23,7 +23,7 @@ flowchart TB
 
 In-repo frontend: [`ui/`](../ui/) (React + TypeScript + Vite, Node ≥ 20).
 
-Production packaging: **separate nginx static image** (`ui/Dockerfile`). The Quarkus distribution does **not** embed UI assets — backend remains the security boundary; UI pods have no assessor ServiceAccount.
+Production packaging: **separate nginx static image** (`ui/Containerfile`). The Quarkus distribution does **not** embed UI assets — backend remains the security boundary; UI pods have no assessor ServiceAccount.
 
 OpenShift manifests: `deploy/openshift/100-ui-deployment.yaml`, `110-ui-service.yaml`, `120-ui-route.yaml`.
 

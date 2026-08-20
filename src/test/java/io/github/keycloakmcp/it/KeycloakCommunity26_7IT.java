@@ -6,7 +6,7 @@ import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 
 /**
  * Community Keycloak 26.7 integration test placeholder.
- * Enabled when RUN_KEYCLOAK_IT=true and Docker/Podman is available.
+ * Enabled when RUN_KEYCLOAK_IT=true and Podman is available.
  */
 @Tag("integration")
 @EnabledIfEnvironmentVariable(named = "RUN_KEYCLOAK_IT", matches = "true")

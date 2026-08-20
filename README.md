@@ -43,7 +43,7 @@ See [`docs/architecture/`](docs/architecture/) and [`docs/ui-architecture.md`](d
 
 ```bash
 # Local Keycloak + PostgreSQL (+ Prometheus as documented)
-docker compose -f dev/compose.yaml up -d
+podman compose -f dev/compose.yaml up -d
 
 # Backend
 mvn quarkus:dev

@@ -42,6 +42,14 @@ mvn quarkus:dev
 ./scripts/smoke-mcp.sh
 ```
 
+For future Testcontainers-based ITs, point the Docker API client at the Podman
+socket (rootless example):
+
+```bash
+export DOCKER_HOST=unix://$XDG_RUNTIME_DIR/podman/podman.sock
+export TESTCONTAINERS_RYUK_DISABLED=true
+```
+
 ## Planned IT layout (0.2.0+)
 
 ```
