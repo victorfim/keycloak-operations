@@ -77,6 +77,13 @@ public class ChangeResource {
     }
 
     @POST
+    @Path("/{changeId}/expire")
+    public ChangeRecord expire(@PathParam("changeId") String changeId, Map<String, Object> body) {
+        String actor = body == null ? null : stringVal(body.get("actor"));
+        return sensitiveDataFilter.redact(changeManagementService.expire(changeId, actor));
+    }
+
+    @POST
     @Path("/plan/client-update")
     public ChangeRecord planClientUpdate(Map<String, Object> body) {
         if (body == null) {

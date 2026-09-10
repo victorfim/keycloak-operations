@@ -115,6 +115,19 @@ public class ChangeTools {
         return invoke("keycloak_verify_change", null, null, () -> changeManagementService.verify(changeId));
     }
 
+    @Tool(
+            name = "keycloak_expire_change",
+            description = "Expire a planned or approved change that is no longer actionable")
+    public ChangeRecord keycloakExpireChange(
+            @ToolArg(description = "Change identifier") String changeId,
+            @ToolArg(description = "Actor identity", required = false) String actor) {
+        return invoke(
+                "keycloak_expire_change",
+                null,
+                null,
+                () -> changeManagementService.expire(changeId, actor));
+    }
+
     private <T> T invoke(String toolName, String targetId, String realm, java.util.concurrent.Callable<T> action) {
         long start = System.currentTimeMillis();
         boolean success = false;

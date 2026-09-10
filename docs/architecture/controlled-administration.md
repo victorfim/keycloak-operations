@@ -62,6 +62,10 @@ risk, approval requirement, policy outcome, or verification result.
 Statuses (typical): `PLANNED` → `WAITING_APPROVAL` → `APPROVED` → `APPLYING` →
 `APPLIED` / `VERIFIED` / `FAILED` / `REJECTED` / `EXPIRED`.
 
+TTL enforcement (`change.expiration.after`, default 7d) expires `WAITING_APPROVAL`,
+`PLANNED`, and `APPROVED` records via expire-on-read, a scheduled job, or
+`POST /api/v1/changes/{id}/expire`. Mutations on expired records return `CHANGE_EXPIRED`.
+
 ## Authorization
 
 Target-scoped permissions:

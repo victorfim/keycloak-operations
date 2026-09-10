@@ -9,6 +9,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -184,6 +186,69 @@ class ChangeManagementServiceTest {
     }
 
     @Test
+    @Transactional
+    void waitingApprovalExpiresOnGet() {
+        var planned = changeManagementService.planClientUpdate(
+                TARGET_B, REALM, CLIENT, Map.of("name", "ExpireMe"), "planner", null);
+        backdateForExpiration(planned.changeId());
+
+        var fetched = changeManagementService.getChange(planned.changeId());
+        assertThat(fetched.status()).isEqualTo(ChangeStatus.EXPIRED);
+    }
+
+    @Test
+    @Transactional
+    void applyOnExpiredChangeDenied() {
+        var planned = changeManagementService.planClientUpdate(
+                TARGET_B, REALM, CLIENT, Map.of("name", "ExpiredApply"), "planner", null);
+        backdateForExpiration(planned.changeId());
+
+        assertThatThrownBy(() -> changeManagementService.apply(planned.changeId(), "applier"))
+                .isInstanceOf(McpException.class)
+                .satisfies(ex -> assertThat(((McpException) ex).getCode()).isEqualTo(ErrorCode.CHANGE_EXPIRED));
+        verify(adminApi, never()).updateClient(any(), any(), any());
+    }
+
+    @Test
+    @Transactional
+    void approveOnExpiredChangeDenied() {
+        var planned = changeManagementService.planClientUpdate(
+                TARGET_B, REALM, CLIENT, Map.of("name", "ExpiredApprove"), "planner", null);
+        backdateForExpiration(planned.changeId());
+
+        assertThatThrownBy(() -> changeManagementService.approve(planned.changeId(), "approver"))
+                .isInstanceOf(McpException.class)
+                .satisfies(ex -> assertThat(((McpException) ex).getCode()).isEqualTo(ErrorCode.CHANGE_EXPIRED));
+    }
+
+    @Test
+    void manualExpireWaitingApproval() {
+        var planned = changeManagementService.planClientUpdate(
+                TARGET_B, REALM, CLIENT, Map.of("name", "ManualExpire"), "planner", null);
+        assertThat(planned.status()).isEqualTo(ChangeStatus.WAITING_APPROVAL);
+
+        var expired = changeManagementService.expire(planned.changeId(), "operator-1");
+        assertThat(expired.status()).isEqualTo(ChangeStatus.EXPIRED);
+        assertThat(expired.resultMessage()).contains("operator-1");
+
+        var again = changeManagementService.expire(planned.changeId(), "operator-2");
+        assertThat(again.status()).isEqualTo(ChangeStatus.EXPIRED);
+    }
+
+    @Test
+    @Transactional
+    void scheduledBatchExpiresStaleRecords() {
+        var planned = changeManagementService.planClientUpdate(
+                TARGET_B, REALM, CLIENT, Map.of("name", "BatchExpire"), "planner", null);
+        backdateForExpiration(planned.changeId());
+
+        int expired = changeManagementService.expireStaleChanges();
+        assertThat(expired).isGreaterThanOrEqualTo(1);
+        assertThat(changeRepository.findById(planned.changeId()).status)
+                .isEqualTo(ChangeStatus.EXPIRED.name());
+    }
+
+    @Test
     void verificationFailureWhenReadBackMismatches() {
         var planned = changeManagementService.planClientUpdate(
                 TARGET_A, REALM, CLIENT, Map.of("name", "ShouldVerify"), "planner", null);
@@ -192,6 +257,12 @@ class ChangeManagementServiceTest {
         assertThatThrownBy(() -> changeManagementService.apply(planned.changeId(), "applier"))
                 .isInstanceOf(McpException.class)
                 .satisfies(ex -> assertThat(((McpException) ex).getCode()).isEqualTo(ErrorCode.VERIFICATION_FAILED));
+    }
+
+    private void backdateForExpiration(String changeId) {
+        ChangeRecordEntity entity = changeRepository.findById(changeId);
+        entity.createdAt = Instant.now().minus(Duration.ofDays(8));
+        entity.updatedAt = entity.createdAt;
     }
 
     private static ClientRepresentation sampleClient(String name, String description) {

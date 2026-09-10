@@ -1,5 +1,6 @@
 package io.github.keycloakmcp.persistence.repository;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -46,5 +47,19 @@ public class ChangeRepository implements PanacheRepositoryBase<ChangeRecordEntit
             return Optional.empty();
         }
         return find("targetId = ?1 and idempotencyKey = ?2", targetId, idempotencyKey).firstResultOptional();
+    }
+
+    /**
+     * Returns change records that may have exceeded their TTL (scheduler batch).
+     * Cutoff is {@code now - expireAfter}.
+     */
+    public List<ChangeRecordEntity> findExpirableBefore(Instant cutoff) {
+        return find(
+                        "(status in ?1 and createdAt < ?2) or (status = ?3 and coalesce(approvedAt, createdAt) < ?4)",
+                        List.of("WAITING_APPROVAL", "PLANNED"),
+                        cutoff,
+                        "APPROVED",
+                        cutoff)
+                .list();
     }
 }

@@ -40,6 +40,7 @@ Historical milestone commits (immutable):
 | | |
 |--|--|
 | Latest completed | **0.8** Controlled Administration & Change Management |
+| Hardening (IN PROGRESS) | [**0.8.0 backlog**](milestones/0.8.0-hardening-backlog.md) — close spec gaps before 0.8.1 |
 | Next (PLANNED) | **0.8.1** Realm & Client Administration |
 | Index | [milestones/README.md](milestones/README.md) |
 
@@ -49,8 +50,11 @@ MCP + REST shared services; multi-target registry; Keycloak Admin reads + contro
 
 **0.8 foundation:** ChangeRequest/ChangePlan lifecycle, safe diff, risk, environment policy, approval bound to plan fingerprint, apply with stale-plan protection, read-back verification, audit, semantic MCP/REST change tools, proof-of-concept non-sensitive client config update (`name` / `description` / `pkceCodeChallengeMethod`).
 
+**0.8.0 hardening (HB-001):** change TTL expiration (`EXPIRED` / `CHANGE_EXPIRED`), expire-on-read, scheduled batch, manual expire API/MCP.
+
 ## Known limitations
 
+- **0.8.0 hardening open** — see [backlog](milestones/0.8.0-hardening-backlog.md) (HB-001 **ACCEPTED**; HB-002–HB-005 P0 remain)
 - Opt-in ITs skipped without `RUN_*_IT` + live stack (`ControlledClientChangeIT` placeholder)
 - Full realm/client/user/flow/IdP administration deferred to 0.8.1–0.8.4
 - Destructive ops, password/secret workflows out of scope
@@ -59,7 +63,7 @@ MCP + REST shared services; multi-target registry; Keycloak Admin reads + contro
 - VM inventory still future
 - `mcp.read-only=true` by default; apply requires explicit opt-out + WRITE
 
-## Test baseline (after 0.8)
+## Test baseline (after HB-001)
 
 ```bash
 mvn clean verify
@@ -68,7 +72,7 @@ cd ui && npm run test:run && npm run build
 
 | | Result |
 |--|--------|
-| Backend unit | **153** run, 0 fail |
+| Backend unit | **161** run, 0 fail |
 | Failsafe | **5** run, **5** skipped |
 | Frontend | **50** Vitest tests |
 | Builds | Backend + UI **SUCCESS** |

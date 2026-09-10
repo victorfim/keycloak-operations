@@ -50,6 +50,7 @@ public class ChangeManagementService {
     private final ChangePersistenceMapper mapper;
     private final SensitiveDataFilter sensitiveDataFilter;
     private final AuditService auditService;
+    private final ChangeExpirationService expirationService;
 
     @Inject
     public ChangeManagementService(
@@ -63,7 +64,8 @@ public class ChangeManagementService {
             ChangeRepository changeRepository,
             ChangePersistenceMapper mapper,
             SensitiveDataFilter sensitiveDataFilter,
-            AuditService auditService) {
+            AuditService auditService,
+            ChangeExpirationService expirationService) {
         this.targetResolver = targetResolver;
         this.targetAuthorization = targetAuthorization;
         this.adminApi = adminApi;
@@ -75,6 +77,7 @@ public class ChangeManagementService {
         this.mapper = mapper;
         this.sensitiveDataFilter = sensitiveDataFilter;
         this.auditService = auditService;
+        this.expirationService = expirationService;
     }
 
     @Transactional
@@ -171,6 +174,7 @@ public class ChangeManagementService {
         ChangeRecordEntity entity = requireEntity(changeId);
         // READ on the owning target
         resolve(entity.targetId, TargetPermission.READ);
+        maybeExpire(entity, "Expired: approval window elapsed");
         return sensitiveDataFilter.redact(mapper.toDomain(entity));
     }
 
@@ -189,7 +193,7 @@ public class ChangeManagementService {
 
     @Transactional
     public ChangeRecord approve(String changeId, String approver) {
-        ChangeRecordEntity entity = requireEntity(changeId);
+        ChangeRecordEntity entity = requireActiveEntity(changeId);
         resolve(entity.targetId, TargetPermission.WRITE);
         ChangeStatus status = ChangeStatus.valueOf(entity.status);
         if (status == ChangeStatus.APPROVED) {
@@ -218,7 +222,7 @@ public class ChangeManagementService {
 
     @Transactional
     public ChangeRecord reject(String changeId, String rejector, String reason) {
-        ChangeRecordEntity entity = requireEntity(changeId);
+        ChangeRecordEntity entity = requireActiveEntity(changeId);
         resolve(entity.targetId, TargetPermission.WRITE);
         ChangeStatus status = ChangeStatus.valueOf(entity.status);
         if (status == ChangeStatus.APPLIED || status == ChangeStatus.VERIFIED || status == ChangeStatus.APPLYING) {
@@ -240,7 +244,7 @@ public class ChangeManagementService {
     public ChangeRecord apply(String changeId, String actor) {
         long start = System.currentTimeMillis();
         boolean success = false;
-        ChangeRecordEntity entity = requireEntity(changeId);
+        ChangeRecordEntity entity = requireActiveEntity(changeId);
         try {
             Target target = resolve(entity.targetId, TargetPermission.WRITE);
             ChangeStatus status = ChangeStatus.valueOf(entity.status);
@@ -327,7 +331,7 @@ public class ChangeManagementService {
 
     @Transactional
     public ChangeRecord verify(String changeId) {
-        ChangeRecordEntity entity = requireEntity(changeId);
+        ChangeRecordEntity entity = requireActiveEntity(changeId);
         Target target = resolve(entity.targetId, TargetPermission.READ);
         if (entity.status.equals(ChangeStatus.REJECTED.name())) {
             throw McpException.invalidArgument("cannot verify rejected change");
@@ -349,6 +353,48 @@ public class ChangeManagementService {
         return mapper.toDomain(entity);
     }
 
+    @Transactional
+    public ChangeRecord expire(String changeId, String actor) {
+        ChangeRecordEntity entity = requireEntity(changeId);
+        resolve(entity.targetId, TargetPermission.WRITE);
+        ChangeStatus status = ChangeStatus.valueOf(entity.status);
+        if (status == ChangeStatus.EXPIRED) {
+            return mapper.toDomain(entity);
+        }
+        if (!ChangeExpirationService.isExpirable(status)) {
+            throw McpException.invalidArgument("cannot expire change in status: " + status);
+        }
+        expirationService.forceExpire(
+                entity,
+                "Expired by " + (actor == null || actor.isBlank() ? "unknown" : actor.trim()));
+        auditChange("change.expire", entity, true, Map.of(
+                "actor", actor == null || actor.isBlank() ? "unknown" : actor.trim(),
+                "manual", true));
+        return mapper.toDomain(entity);
+    }
+
+    /**
+     * Batch-expire stale records (scheduler). Audits each transition.
+     *
+     * @return number of records transitioned to EXPIRED
+     */
+    @Transactional
+    public int expireStaleChanges() {
+        if (!expirationService.isEnabled()) {
+            return 0;
+        }
+        java.time.Instant cutoff = java.time.Instant.now().minus(expirationService.expireAfter());
+        List<ChangeRecordEntity> candidates = changeRepository.findExpirableBefore(cutoff);
+        int expired = 0;
+        for (ChangeRecordEntity entity : candidates) {
+            if (expirationService.expireIfNeeded(entity, "Expired by scheduled TTL enforcement")) {
+                auditChange("change.expire", entity, true, Map.of("reason", "TTL", "manual", false));
+                expired++;
+            }
+        }
+        return expired;
+    }
+
     private ChangeVerificationResult verifyEntity(ChangeRecordEntity entity, Target target) {
         ClientRepresentation actual =
                 adminApi.findClientByClientId(target, entity.realm, entity.resourceId);
@@ -368,6 +414,21 @@ public class ChangeManagementService {
         }
         return changeRepository.findByIdOptional(changeId.trim())
                 .orElseThrow(() -> McpException.changeNotFound(changeId));
+    }
+
+    private ChangeRecordEntity requireActiveEntity(String changeId) {
+        ChangeRecordEntity entity = requireEntity(changeId);
+        maybeExpire(entity, "Expired: approval window elapsed");
+        if (ChangeStatus.EXPIRED.name().equals(entity.status)) {
+            throw McpException.changeExpired(changeId);
+        }
+        return entity;
+    }
+
+    private void maybeExpire(ChangeRecordEntity entity, String reason) {
+        if (expirationService.expireIfNeeded(entity, reason)) {
+            auditChange("change.expire", entity, true, Map.of("reason", "TTL", "manual", false));
+        }
     }
 
     private Target resolve(String targetId, TargetPermission permission) {

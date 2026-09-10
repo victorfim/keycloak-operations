@@ -13,7 +13,8 @@ Product delivery slices. Status from Git / `pom.xml` / code — not chat history
 | [0.6.1](0.6.1-metrics-hardening.md) | Metrics Hardening | COMPLETED |
 | [0.7](0.7-web-ui.md) | Web UI | COMPLETED |
 | [0.8](0.8-controlled-administration.md) | Controlled Administration & Change Management | COMPLETED |
-| 0.8.1 | Realm & Client Administration | PLANNED *(next)* |
+| [0.8.0 hardening](0.8.0-hardening-backlog.md) | Close 0.8 spec gaps (expire, RBAC, policies, IT) | **IN PROGRESS** |
+| 0.8.1 | Realm & Client Administration | PLANNED *(after 0.8.0 hardening)* |
 | 0.8.2 | Users, Groups & Roles | PLANNED |
 | 0.8.3 | Authentication Flows & Client Scopes | PLANNED |
 | 0.8.4 | Identity Providers & Advanced Realm Configuration | PLANNED |
@@ -34,4 +35,4 @@ Workflow: [`../../AGENTS.md`](../../AGENTS.md) · HEAD snapshot: [`../project-st
 | `59461d1` | 0.6 |
 | `089f6ea` | 0.6.1 hardening |
 | `bcad150` | 0.7 Web UI |
-| *(in progress)* | 0.8 Controlled Administration |
+| *(HEAD)* | 0.8 Controlled Administration — [hardening backlog](0.8.0-hardening-backlog.md) |

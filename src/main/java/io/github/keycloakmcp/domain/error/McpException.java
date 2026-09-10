@@ -146,6 +146,11 @@ public class McpException extends RuntimeException {
                 Map.of("changeId", changeId == null ? "" : changeId));
     }
 
+    public static McpException changeExpired(String changeId) {
+        return of(ErrorCode.CHANGE_EXPIRED, "change expired: " + changeId,
+                Map.of("changeId", changeId == null ? "" : changeId));
+    }
+
     public static McpException policyDenied(String message) {
         return of(ErrorCode.POLICY_DENIED, message);
     }
